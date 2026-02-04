@@ -1,0 +1,281 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI新闻热点整合</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 15px; }
+        .header-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            display: flex;
+            gap: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        button.secondary { background: #6c757d; }
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 30px;
+        }
+        .news-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .card-category {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .card-category[data-category="model-release"] { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .card-category[data-category="tools-platform"] { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .card-category[data-category="research"] { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .card-category[data-category="opensource"] { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .card-category[data-category="industry"] { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+        .card-date { color: #6c757d; font-size: 12px; }
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-summary {
+            color: #495057;
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+        .card-stars { color: #ffc107; }
+        .card-link { color: #667eea; font-size: 13px; font-weight: 600; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 40px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+        .detail-category {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        .detail-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+        .detail-summary {
+            color: #495057;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+        .detail-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🤖 AI新闻热点整合</h1>
+            <div class="header-info">
+                <span>🕒 更新时间: 2026-02-04</span>
+                <span>📰 共 24 条新闻</span>
+            </div>
+        </header>
+        <div class="filter-section">
+            <div class="filter-group">
+                <select id="categoryFilter">
+                    <option value="all">全部</option>
+                    <option value="model-release">模型发布</option>
+                    <option value="tools-platform">工具平台</option>
+                    <option value="research">研究成果</option>
+                    <option value="opensource">开源项目</option>
+                    <option value="industry">行业动态</option>
+                </select>
+            </div>
+            <button onclick="filterNews()">应用筛选</button>
+            <button class="secondary" onclick="resetFilter()">重置</button>
+        </div>
+        <div id="newsGrid" class="news-grid"></div>
+    </div>
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+    <script>
+        const NEWS_DATA = [
+            {id:"1",title:"LingBot-World: Open Source AI World Model | 16FPS 3D",url:"https://lingbot-world.com/",summary:"开源AI世界模型，16FPS实时3D环境生成，专注具身AI基础大模型",category:"opensource",stars:5,timestamp:"2026-02-01"},
+            {id:"2",title:"DeepSeek V4即将发布",url:"https://vertu.com/lifestyle/deepseek-v4-what-can-the-new-architecture-actually-do/",summary:"MODEL1架构，1.8倍推理速度提升，可能集成Engram记忆和视觉能力",category:"model-release",stars:5,timestamp:"2026-01-26"},
+            {id:"3",title:"Moltbook - AI代理专属社交网络",url:"https://www.moltbook.com/",summary:"AI代理互联网的前页，AI代理可以分享、讨论、点赞内容",category:"tools-platform",stars:5,timestamp:"2026-02-01"},
+            {id:"4",title:"GLM-4.7: 编码能力显著提升",url:"https://z.ai/blog/glm-4.7",summary:"SWE-bench达73.8%，SWE-bench多语言版本达66.7%，Terminal Bench 2.0达41%",category:"model-release",stars:4,timestamp:"2025-12-22"},
+            {id:"5",title:"Qwen3-Max: 阿里超大规模模型",url:"https://qwen.ai/blog?id=qwen3-max",summary:"全功能聊天、图像视频理解、生成、文档处理，Qwen VL-Max视觉语言模型",category:"model-release",stars:4,timestamp:"2026-01-25"},
+            {id:"6",title:"Engram架构 - DeepSeek记忆系统",url:"https://zhuanlan.zhihu.com/p/1994357404989678235",summary:"O(1)时间复杂度的哈希记忆检索，为大模型补上记忆系统关键拼图",category:"research",stars:5,timestamp:"2026-01-13"},
+            {id:"7",title:"Codex vs Claude Code对比",url:"https://www.builder.io/blog/codex-vs-claude-code",summary:"两个AI编码代理的对比分析，推理速度和输出质量比较",category:"tools-platform",stars:3,timestamp:"2025-10-01"},
+            {id:"8",title:"AI智能体定义与发展",url:"https://cloud.google.com/learn/what-are-ai-agents",summary:"Google Cloud介绍AI智能体的概念、工作原理、应用场景",category:"industry",stars:3,timestamp:"2026-01-21"}
+        ];
+        const CATEGORY_NAMES = {'model-release':'模型发布','tools-platform':'工具平台','research':'研究成果','opensource':'开源项目','industry':'行业动态'};
+        function renderNews(news) {
+            const grid = document.getElementById('newsGrid');
+            grid.innerHTML = news.map(item => `
+                <div class="news-card" onclick="showDetail('${item.id}')">
+                    <div class="card-header">
+                        <span class="card-category" data-category="${item.category}">${CATEGORY_NAMES[item.category]}</span>
+                        <span class="card-date">${item.timestamp}</span>
+                    </div>
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-summary">${item.summary}</p>
+                    <div class="card-footer">
+                        <span class="card-stars">${'⭐'.repeat(item.stars)}</span>
+                        <span class="card-link">查看详情 →</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function showDetail(id) {
+            const item = NEWS_DATA.find(n => n.id === id);
+            document.getElementById('modalBody').innerHTML = `
+                <span class="detail-category">${CATEGORY_NAMES[item.category]}</span>
+                <h2 class="detail-title">${item.title}</h2>
+                <p class="detail-summary">${item.summary}</p>
+                <a href="${item.url}" target="_blank" class="detail-link">🔗 查看原文</a>
+            `;
+            document.getElementById('detailModal').style.display = 'block';
+        }
+        function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
+        function filterNews() {
+            const cat = document.getElementById('categoryFilter').value;
+            const news = cat === 'all' ? NEWS_DATA : NEWS_DATA.filter(n => n.category === cat);
+            renderNews(news);
+        }
+        function resetFilter() {
+            document.getElementById('categoryFilter').value = 'all';
+            renderNews(NEWS_DATA);
+        }
+        renderNews(NEWS_DATA);
+    </script>
+</body>
+</html>
